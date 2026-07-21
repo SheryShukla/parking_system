@@ -1,0 +1,12 @@
+{% extends 'parking/base.html' %}
+{% block content %}
+<div class="card" style="max-width:400px;margin:0 auto;">
+    <h2>Login</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn" type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="{% url 'register' %}">Register </a></p>
+</div>
+{% endblock %}

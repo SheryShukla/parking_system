@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Parking Booking{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; color: #222; }
+        nav { background: #1f2937; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: #fff; text-decoration: none; margin-right: 16px; font-size: 14px; }
+        nav a:hover { text-decoration: underline; }
+        .container { max-width: 900px; margin: 30px auto; padding: 0 16px; }
+        .card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 16px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn { display: inline-block; padding: 8px 14px; background: #2563eb; color: #fff; border: none; border-radius: 5px; text-decoration: none; font-size: 14px; cursor: pointer; }
+        .btn-danger { background: #dc2626; }
+        .btn-green { background: #16a34a; }
+        .badge { padding: 3px 8px; border-radius: 4px; font-size: 12px; color: #fff; }
+        .badge-available { background: #16a34a; }
+        .badge-booked { background: #dc2626; }
+        .messages { list-style: none; padding: 0; }
+        .messages li { padding: 10px; border-radius: 5px; margin-bottom: 10px; background: #dbeafe; font-size: 14px; }
+        form input, form select { padding: 8px; width: 100%; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 5px; }
+        label { font-size: 13px; font-weight: bold; }
+        h2 { margin-top: 0; }
+    </style>
+</head>
+<body>
+<nav>
+    <div>
+        <a href="{% url 'dashboard' %}">🅿️ Parking System</a>
+    </div>
+    <div>
+        {% if user.is_authenticated %}
+            {% if user.is_superuser or user.profile.is_manager %}
+                <a href="{% url 'manager_dashboard' %}">Manager Dashboard</a>
+            {% else %}
+                <a href="{% url 'slot_list' %}">Available Slots</a>
+                <a href="{% url 'my_bookings' %}">My Bookings</a>
+            {% endif %}
+            {% if user.is_superuser %}<a href="/admin/">Django Admin</a>{% endif %}
+            <a href="{% url 'logout' %}">Logout ({{ user.username }})</a>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+            <a href="{% url 'register' %}">Register</a>
+        {% endif %}
+    </div>
+</nav>
+<div class="container">
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}<li>{{ message }}</li>{% endfor %}
+        </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+</div>
+</body>
+</html>

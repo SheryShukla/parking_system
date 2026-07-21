@@ -1,0 +1,13 @@
+{% extends 'parking/base.html' %}
+{% block content %}
+<div class="card" style="max-width:450px;">
+    <h2>Book Slot {{ slot.slot_number }}</h2>
+    <p>Location: {{ slot.location }} | Price: ₹{{ slot.price_per_hour }}/hr</p>
+    <form method="post">
+        {% csrf_token %}
+        <label>Expected end time (optional)</label>
+        {{ form.end_time }}
+        <button class="btn btn-green" type="submit">Confirm Booking</button>
+    </form>
+</div>
+{% endblock %}

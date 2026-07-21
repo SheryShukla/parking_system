@@ -1,0 +1,19 @@
+{% extends 'parking/base.html' %}
+{% block content %}
+<div class="card">
+    <h2>Available Parking Slots</h2>
+    <table>
+        <tr><th>Slot No.</th><th>Location</th><th>Price/hr</th><th></th></tr>
+        {% for slot in slots %}
+        <tr>
+            <td>{{ slot.slot_number }}</td>
+            <td>{{ slot.location }}</td>
+            <td>₹{{ slot.price_per_hour }}</td>
+            <td><a class="btn btn-green" href="{% url 'book_slot' slot.id %}">Book Now</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4">Slots are not available.</td></tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}
