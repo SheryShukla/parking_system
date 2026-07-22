@@ -5,8 +5,11 @@
     <p>Location: {{ slot.location }} | Price: ₹{{ slot.price_per_hour }}/hr</p>
     <form method="post">
         {% csrf_token %}
-        <label>Expected end time (optional)</label>
-        {{ form.end_time }}
+        <label>Book for how long?</label>
+        {{ form.duration_hours }}
+        <p style="color:#666; font-size:0.9em;">
+            Slot will auto-release once this time is up.
+        </p>
         <button class="btn btn-green" type="submit">Confirm Booking</button>
     </form>
 </div>

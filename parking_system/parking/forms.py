@@ -18,10 +18,22 @@ class ParkingSlotForm(forms.ModelForm):
         fields = ['slot_number', 'location', 'price_per_hour', 'is_available']
 
 
-class BookingForm(forms.ModelForm):
-    class Meta:
-        model = Booking
-        fields = ['end_time']
-        widgets = {
-            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-        }
+# How long a user is allowed to hold a slot for. Extend this list freely.
+DURATION_CHOICES = (
+    (1, '1 hour'),
+    (2, '2 hours'),
+    (3, '3 hours'),
+    (6, '6 hours'),
+    (12, '12 hours'),
+    (24, '24 hours'),
+)
+
+
+class BookingForm(forms.Form):
+    """the user picks a duration, and the view computes start_time/end_time from it rather than the user picking raw
+    datetimes."""
+    duration_hours = forms.ChoiceField(
+        choices=DURATION_CHOICES,
+        label='Book for',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )

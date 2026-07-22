@@ -1,6 +1,9 @@
+from django.utils import timezone
 from rest_framework import generics, permissions, viewsets, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 
 from .models import ParkingSlot, Booking
 from .serializers import RegisterSerializer, ParkingSlotSerializer, BookingSerializer
@@ -25,6 +28,38 @@ class RegisterAPIView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
 
+class LogoutAPIView(APIView):
+    """
+    POST {"refresh": "<refresh_token>"} -> blacklists the refresh token so it
+    can no longer be used to obtain new access tokens. Requires
+    'rest_framework_simplejwt.token_blacklist' in INSTALLED_APPS and its
+    migrations applied.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response(
+                {'detail': 'refresh token is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except TokenError:
+            return Response(
+                {'detail': 'Invalid or already blacklisted token.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({'detail': 'Logged out successfully.'}, status=status.HTTP_205_RESET_CONTENT)
+
+
+def _release_expired(qs):
+    for booking in qs.filter(status='booked', end_time__lte=timezone.now()).select_related('slot'):
+        booking.release_if_expired()
+
+
 class ParkingSlotViewSet(viewsets.ModelViewSet):
     """
     /api/slots/         GET (list), POST (create - manager only)
@@ -39,6 +74,9 @@ class BookingViewSet(viewsets.ModelViewSet):
     """
     /api/bookings/         GET (own bookings, or all if manager), POST (book a slot)
     /api/bookings/<id>/    GET, DELETE (cancel - sets status=cancelled instead of deleting)
+
+    POST body: {"slot": <id>, "duration_hours": <1-72>}
+    start_time/end_time are computed server-side from duration_hours.
     """
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -46,12 +84,15 @@ class BookingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser or (hasattr(user, 'profile') and user.profile.is_manager):
-            return Booking.objects.all().order_by('-created_at')
-        return Booking.objects.filter(user=user).order_by('-created_at')
+            qs = Booking.objects.all()
+        else:
+            qs = Booking.objects.filter(user=user)
+        _release_expired(qs)
+        return qs.order_by('-created_at')
 
     def perform_create(self, serializer):
         slot = serializer.validated_data['slot']
-        booking = serializer.save(user=self.request.user)
+        serializer.save(user=self.request.user)
         slot.is_available = False
         slot.save()
 
